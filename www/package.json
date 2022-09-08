@@ -4,9 +4,11 @@
   "description": "",
   "main": "index.tsx",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "Webpack .",
-    "start": "webpack-dev-server ."
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "npm run type-check -- --watch",
+    "build": "webpack --progress --mode=production",
+    "start": "webpack s --config ./webpack.config.js --mode=development",
+    "start:prod": "npm run build && http-server dist -p 9999 -o"
   },
   "keywords": [],
   "author": "",
@@ -37,6 +39,8 @@
     "webpack-dev-server": "^4.11.0"
   },
   "dependencies": {
+    "fork-ts-checker-webpack-plugin": "^7.2.13",
+    "html-webpack-plugin": "^5.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   }

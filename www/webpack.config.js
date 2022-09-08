@@ -1,5 +1,7 @@
+const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
-
+const BUILD_PATH = path.resolve(__dirname, "public");
 /*We are basically telling webpack to take index.js from entry. Then check for all file extensions in resolve. 
 After that apply all the rules in module.rules and produce the output and place it in main.js in the public folder.*/
 
@@ -12,7 +14,7 @@ module.exports = {
   /** "entry"
    * the entry point
    */
-  entry: "index.ts",
+  entry: "./index.tsx",
   output: {
     /** "path"
      * the folder path of the output file
@@ -21,7 +23,7 @@ module.exports = {
     /** "filename"
      * the name of the output file
      */
-    filename: "main.js",
+    filename: "bundle.js",
   },
   /** "target"
    * setting "node" as target app (server side), and setting it as "web" is
@@ -60,6 +62,13 @@ module.exports = {
      */
     extensions: ["*", ".js", ".jsx", ".tsx", ".ts"],
   },
+  plugins: [
+    new HtmlWebpackPlugin({
+      inject: true,
+      template: path.join(BUILD_PATH, "index.html"),
+    }),
+    new ForkTsCheckerWebpackPlugin(),
+  ],
   module: {
     /** "rules"
      * This says - "Hey webpack compiler, when you come across a path that resolves to a '.js or .jsx'
