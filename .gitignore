@@ -1,2 +1,3 @@
 # ignore node modules
-www/node_modules
+/target
+/www/node_modules
