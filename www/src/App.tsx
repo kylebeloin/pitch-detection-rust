@@ -1,9 +1,9 @@
 import React from "react";
-
+import { Recorder } from "./components/Recorder";
 export const App = () => {
   return (
     <div>
-      <h1>No Create React App!</h1>
+      <Recorder />
     </div>
   );
 };
