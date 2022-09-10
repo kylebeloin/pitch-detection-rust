@@ -1,4 +1,6 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Visualization } from "./Visualization";
+import { drawPitch } from "../utilities/drawPitch";
 
 const options = {
   audioBitsPerSecond: 48000,
@@ -18,12 +20,12 @@ const useRecorder = () => {
   const processorCallback = useCallback(
     (processor: AudioWorkletNode) => {
       processor.port.onmessage = (event) => {
-        console.log(event);
-        const { track } = event.data.payload;
-        setTrack((prev) => [...prev, track]);
+        const t = [...event.data.payload.track];
+        console.log("track", t);
+        setTrack((prev) => [...prev, t[0]]);
       };
     },
-    [setProcessor]
+    [track, setProcessor]
   );
 
   const startRecording = useCallback(async () => {
@@ -72,7 +74,6 @@ const useRecorder = () => {
     if (!isRecording) return;
     setIsRecording(false);
     console.log(track);
-
     recorder?.stop();
     recorderStream?.getTracks().forEach((track) => track.stop());
   }, [isRecording, recorder, recorderStream, processor, track]);
@@ -106,6 +107,7 @@ const useRecorder = () => {
     resetRecording,
     downloadRecording,
     recorderError,
+    track,
   };
 };
 
@@ -117,16 +119,31 @@ export const Recorder = () => {
     resetRecording,
     downloadRecording,
     recorderError,
+    track,
   } = useRecorder();
 
+  const [data, setData] = useState<any[][]>([]);
+
+  useEffect(() => {
+    if (track.length > 0) {
+      console.log(track[0]);
+      setData((prev) => [...track]);
+    }
+  }, [track.length]);
+
   return (
-    <div>
-      <h1>Recorder</h1>
-      <button onClick={startRecording}>Start</button>
-      <button onClick={stopRecording}>Stop</button>
-      <button onClick={resetRecording}>Reset</button>
-      <button onClick={downloadRecording}>Download</button>
-      {recorderError && <p>{recorderError.message}</p>}
-    </div>
+    <>
+      <div>
+        <h1>Recorder</h1>
+        <button onClick={startRecording}>Start</button>
+        <button onClick={stopRecording}>Stop</button>
+        <button onClick={resetRecording}>Reset</button>
+        <button onClick={downloadRecording}>Download</button>
+        {recorderError && <p>{recorderError.message}</p>}
+      </div>
+      {data.length > 0 ? (
+        <Visualization draw={drawPitch} data={{ track: data, isRecording }} />
+      ) : null}
+    </>
   );
 };

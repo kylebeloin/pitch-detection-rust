@@ -103,7 +103,7 @@ class AutoCorrelation {
   }
 }
 
-const processAudio = (view) => {
+const processAudio = (data) => {
   const { freqMin, freqLow, freqHigh, freqMax, sampleRate } = options;
   let autoCorrelator = new AutoCorrelation(
     freqMin,
@@ -114,6 +114,7 @@ const processAudio = (view) => {
   );
 
   let track = [];
+  let view = [...data];
   let animationLength = options.sampleRate / 20;
   let animationBuff = new Float32Array(animationLength);
   let animationPosition = 0;
@@ -166,9 +167,7 @@ class PitchDetectProcessor extends AudioWorkletProcessor {
     switch (type) {
       case "process":
         const track = processAudio(view);
-
         this.port.postMessage({ type: "processed", payload: { track } });
-        this.track = [...this.track, track];
         break;
       case "stop":
         this.port.postMessage({
