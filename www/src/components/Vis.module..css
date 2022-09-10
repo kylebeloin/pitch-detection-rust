@@ -1,0 +1,15 @@
+.container {
+  position: relative;
+  width: 50vw;
+  height: 50vh;
+}
+
+.pointer {
+  position: absolute;
+  top: 0;
+  left: var(--x);
+  width: 2px;
+  height: 100%;
+  background: blue;
+  pointer-events: all;
+}

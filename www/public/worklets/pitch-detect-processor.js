@@ -7,7 +7,7 @@ const options = {
   sampleRate: 48000,
   enmax: 0.1,
   enmin: 0.5,
-  disptime: 5,
+  disptime: 2,
   style: {
     BACKCOLOUR: "#fafafa",
     GRIDCOLOUR: "#DDDDDD",
@@ -147,7 +147,6 @@ const processAudio = (data) => {
         animationBuff[animationPosition] = animationBuff[j];
     }
   }
-  console.log(track);
   return track;
 };
 
