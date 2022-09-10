@@ -71,7 +71,6 @@ const useRecorder = () => {
   }, [isRecording, processor]);
 
   const stopRecording = useCallback(() => {
-    if (!isRecording) return;
     setIsRecording(false);
     recorder?.stop();
     recorderStream?.getTracks().forEach((track) => track.stop());
@@ -143,9 +142,12 @@ export const Recorder = () => {
   }, [audio, data, containerRef, setCursorPosition]);
 
   const handleStartRecording = useCallback(() => {
+    if (time && Math.floor((time / 100) % 60) === limit) {
+      reset();
+    }
     startRecording();
     start();
-  }, [startRecording, start]);
+  }, [startRecording, start, time, limit]);
 
   const handleStopRecording = useCallback(() => {
     stopRecording();
@@ -181,7 +183,6 @@ export const Recorder = () => {
 
   useEffect(() => {
     if (time && Math.floor((time / 100) % 60) === limit) {
-      window.performance.mark("end");
       handleStopRecording();
     }
   }, [time, limit]);
