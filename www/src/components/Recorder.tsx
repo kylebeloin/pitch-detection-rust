@@ -1,5 +1,9 @@
 import React, { useCallback, useState } from "react";
 
+const options = {
+  audioBitsPerSecond: 48000,
+};
+
 const useRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
@@ -8,6 +12,19 @@ const useRecorder = () => {
   );
   const [recorderChunks, setRecorderChunks] = useState<Blob[]>([]);
   const [recorderError, setRecorderError] = useState<Error | null>(null);
+  const [processor, setProcessor] = useState<AudioWorkletNode | null>(null);
+  const [track, setTrack] = useState<any[][]>([]);
+
+  const processorCallback = useCallback(
+    (processor: AudioWorkletNode) => {
+      processor.port.onmessage = (event) => {
+        console.log(event);
+        const { track } = event.data.payload;
+        setTrack((prev) => [...prev, track]);
+      };
+    },
+    [setProcessor]
+  );
 
   const startRecording = useCallback(async () => {
     if (isRecording) return;
@@ -18,37 +35,47 @@ const useRecorder = () => {
         audio: true,
       });
       setRecorderStream(stream);
-      const recorder = new MediaRecorder(stream);
+      const recorder = new MediaRecorder(stream, options);
       setRecorder(recorder);
       let context = new AudioContext();
       let source = context.createMediaStreamSource(stream);
-      const analyser = context.createAnalyser();
-      analyser.fftSize = 2048;
-      const bufferLength = analyser.frequencyBinCount;
-
-      const dataArray = new Uint8Array(bufferLength);
-      analyser.getByteTimeDomainData(dataArray);
-      source.connect(analyser);
-
+      await context.audioWorklet.addModule(
+        "worklets/pitch-detect-processor.js"
+      );
+      const pitchDetectorNode = new AudioWorkletNode(
+        context,
+        "pitch-detect-processor"
+      );
+      source.connect(pitchDetectorNode);
+      setProcessor(pitchDetectorNode);
+      processorCallback(pitchDetectorNode);
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
           setRecorderChunks((chunks) => [...chunks, e.data]);
         }
       };
 
+      recorder.onstop = () => {
+        pitchDetectorNode.port.dispatchEvent(new MessageEvent("stop"));
+        processor && processor.disconnect();
+        source.disconnect();
+        context.close();
+      };
+
       recorder.start();
     } catch (error) {
       setRecorderError(error as Error);
     }
-  }, [isRecording]);
+  }, [isRecording, processor]);
 
   const stopRecording = useCallback(() => {
     if (!isRecording) return;
     setIsRecording(false);
+    console.log(track);
 
     recorder?.stop();
     recorderStream?.getTracks().forEach((track) => track.stop());
-  }, [isRecording, recorder, recorderStream]);
+  }, [isRecording, recorder, recorderStream, processor, track]);
 
   const resetRecording = useCallback(() => {
     setRecorder(null);
@@ -58,12 +85,12 @@ const useRecorder = () => {
   }, []);
 
   const downloadRecording = useCallback(() => {
-    const blob = new Blob(recorderChunks, { type: "audio/webm" });
+    const blob = new Blob(recorderChunks, { type: "audio/mp3" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.style.display = "none";
     a.href = url;
-    a.download = "recording.webm";
+    a.download = "recording.mp3";
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
